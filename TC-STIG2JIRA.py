@@ -7,11 +7,13 @@ from STIG2Jira import StigRule
 from STIG2Jira import StigGroup
 from STIG2Jira import StigCheck
 from STIG2Jira import StigReference
+from STIG2Jira import StigFix
+from STIG2Jira import StigFixtext
 import unittest
 
 class TestReadXML(unittest.TestCase):
     def setUp(self):
-        pass
+        pass#TODO jasimmonsv@jasimmonsv.com
 
 class TestCheckCheck(unittest.TestCase):
     """All the unit test cases for the Check Class
@@ -125,9 +127,10 @@ class TestCheckRule(unittest.TestCase):
                'Responsibility&gt;System Administrator&lt;/Responsibility&gt;'
                '&lt;IAControls&gt;ECRR-1&lt;/IAControls&gt;')
         fixtext = ''
+        fix = StigFix('F-29449r1_fix')
         severity = 'low'
         weight = '10.0'
-        self.test_rule = StigRule(id, ver, title, desc, self.ref, fixtext)
+        self.test_rule = StigRule(id, ver, title, desc, self.ref, fixtext, fix)
         self.assertIsInstance(self.test_rule, StigRule, 'StigRule was not created' 
                             ' properly')
         
@@ -137,7 +140,8 @@ class TestCheckRule(unittest.TestCase):
         title = ''
         desc = ''
         fixtext = ''
-        test_rule = StigRule(id, ver, title, desc, self.ref, fixtext)
+        fix = StigFix('F-29449r1_fix')
+        test_rule = StigRule(id, ver, title, desc, self.ref, fixtext, fix)
         self.assertIsInstance(test_rule, StigRule, 'StigRule was not created' 
                             ' properly')
         
@@ -147,21 +151,22 @@ class TestCheckRule(unittest.TestCase):
                   ' Rule')
     
     def test_change_severity(self):
-        pass
+        pass#TODO jasimmonsv@jasimmonsv.com Add chnage severity tests
         
     def test_change_weight(self):
-        pass
+        pass#TODO jasimmonsv@jasimmonsv.com Add change weight tests
         
     def test_reset_severity(self):
-        pass
+        pass#TODO jasimmonsv@jasimmonsv.com Add reset severity tests
         
     def test_reset_weight(self):
-        pass
+        pass#TODO jasimmonsv@jasimmonsv.com Add reset weight tests
         
 class TestCheckGroup(unittest.TestCase):
     """All unit test cases for the Group class
     """
     test_group = None
+    test_rule = None
     
     def setUp(self):
         id = 'V-1090'
@@ -182,8 +187,59 @@ class TestCheckGroup(unittest.TestCase):
                              'properly')
     
     def test_add_rule(self):
-        self.assertTrue(self.test_group.add_rule(rule))
+        #setup test_ref
+        title = 'VMS Target Windows 7'
+        publisher = 'DISA FSO'
+        type = 'VMS Target'
+        subject = 'Windows 7'
+        id = '1712'
+        test_ref = StigReference(title, publisher, type, subject, id)
+        #Setup test_rule using test_ref
+        id = 'SV-25033r1_rule'
+        ver = '3.015'
+        title = 'System halts once an event log has reached its maximum size.'
+        desc = ('&lt;VulnDiscussion&gt;A system that is configured to halt if an'
+               ' event log becomes full can create a denial of service'
+               ' situation.&lt;/VulnDiscussion&gt;&lt;FalsePositives&gt;&lt;/'
+               ' FalsePositives&gt;&lt;FalseNegatives&gt;&lt;/'
+               ' FalseNegatives&gt;&lt;Documentable&gt;false&lt;/Documentable'
+               '&gt;&lt;Mitigations&gt;&lt;/Mitigations&gt;&lt;'
+               'SeverityOverrideGuidance&gt;&lt;/SeverityOverrideGuidance&gt;'
+               '&lt;PotentialImpacts&gt;&lt;/PotentialImpacts&gt;&lt;'
+               'ThirdPartyTools&gt;&lt;/ThirdPartyTools&gt;&lt;'
+               'MitigationControl&gt;&lt;/MitigationControl&gt;&lt;'
+               'Responsibility&gt;System Administrator&lt;/Responsibility&gt;'
+               '&lt;IAControls&gt;ECRR-1&lt;/IAControls&gt;')
+        fixtext = ''
+        fix = StigFix('F-29449r1_fix')
+        severity = 'low'
+        weight = '10.0'
+        test_rule = StigRule(id, ver, title, desc, test_ref, fixtext, fix)
+        self.assertTrue(self.test_group.add_rule(test_rule))
+        #TODO jasimmonsv@jasimmonsv.com Add more complete add rule tests
         
+class TestCheckDescription(unittest.TestCase):
+    def setUp(self):
+        pass
+        
+class TestCheckFixtext(unittest.TestCase):
+    def setUp(self):
+        pass
+        
+    def test_create_fixtext(self):
+        fixref = ''
+        content = ''
+        test_fixtext = StigFixtext(fixref, content)
+        self.assertIsInstance(test_fixtext, StigFixtext)
+
+class TestCheckFix(unittest.TestCase):
+    def setUp(self):
+        pass
+        
+    def test_create_fix(self):
+        fix_id = 'F-29449r1_fix'
+        test_fix = StigFix(fix_id)
+        self.assertIsInstance(test_fix, StigFix)
         
 class TestCheckClass(unittest.TestCase):
     def setUp(self):
@@ -195,17 +251,17 @@ class TestCheckClass(unittest.TestCase):
         href = 'VMS_XCCDF_Benchmark_Windows_7_STIG.xml'
         content = ''
         test_check = StigCheck(name, sys, href, content)
-        pass
+        pass#TODO jasimmonsv@jasimmonsv.com Add more complete check tests
 
 class TestRuleClass(unittest.TestCase):
     def setUp(self):
-        pass
+        pass#TODO jasimmonsv@jasimmonsv.com
     
     def test_create_rule(self):
-        pass
+        pass#TODO jasimmonsv@jasimmonsv.com
     
     def test_modify_rule(self):
-        pass
+        pass#TODO jasimmonsv@jasimmonsv.com
     
 if __name__ == '__main__':
     unittest.main()

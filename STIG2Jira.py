@@ -18,8 +18,37 @@ XML_FILE: file of the xml document
 import xml.dom.minidom
 from xml.dom.minidom import parse, parseString
 import unittest
+import sys
 
+DEF_SEVERITY = 'high'
+DEF_WEIGHT = '10'
 XML_FILE = 'U_Windows_7_V1R13_STIG_Manual-xccdf.xml' #TODO jsimmons@jasimmonsv.com set this from command line
+stig_groups = []
+
+class StigFixtext(object):
+    """A Fixtext data structure
+    
+    Attributes:
+        fixref: a cross reference to DISA tracking
+        content: the actual content of the fixtext
+    """
+    fixref = ''
+    content = ''
+    
+    def __init__(self, fixref, content):
+        self.fixref = fixref
+        self.content = content
+        
+class StigFix(object):
+    """A Fix data structure
+    
+    Attributes:
+        fix_id: a cross reference DISA id
+    """
+    fix_id = ''
+    
+    def __init__(self, fix_id):
+        self.fix_id = fix_id
 
 class StigReference(object):
     """A Reference data structure
@@ -95,13 +124,14 @@ class StigRule(object):
     DESCRIPTION = ''
     REFERENCE = '' 
     FIXTEXT = ''
-    _DISA_SEVERITY = 0
-    severity = 0
-    _DISA_WEIGHT = 0
-    weight = 0
+    FIX = ''
+    _DISA_SEVERITY = DEF_SEVERITY
+    severity = DEF_SEVERITY
+    _DISA_WEIGHT = DEF_WEIGHT
+    weight = DEF_WEIGHT
     checks = []
     
-    def __init__(self, id, ver, title, desc, ref, fixtext, severity = 0, weight=0):
+    def __init__(self, id, ver, title, desc, ref, fixtext, fix, severity = DEF_SEVERITY, weight=DEF_WEIGHT):
         """Inits StigGroup with id, title, desc and a null array of Rules
     
         Args:
@@ -115,8 +145,8 @@ class StigRule(object):
             self.REFERENCE = ref        
         else: 
             raise Exception('Expecting StigReference type for StigRule')
-        self.FIXTEXT = '' #TODO jsimmons@jasimmonsv.com figure out purpose of 
-                          #fixtext and fixID
+        self.FIXTEXT = fixtext
+        self.FIX = fix
         self.severity = severity
         self._DISA_SEVERITY = severity
         self.weight = weight
@@ -190,7 +220,57 @@ class StigGroup(object):
         self.rules.append(rule)
         return True
         
+def parse_fixtext(fixtext):
+    fixref = fixtext.getAttribute('fixref')
+    content = fixtext.firstChild.nodeValue
+    #TODO jasimmonsv@jasimmonsv.com build fixtext
+    pass
     
+def parse_rules(rules):
+    """
+    
+    Args:
+        rules: an XML Element containing all the rules for a given Group
+        
+    Returns:
+        an array of StigRule()
+    
+    Raises:
+        Exception 'Node not recognized' if there is a childNode that has not 
+        been seen before
+    """
+    #TODO jsimmons@jasimmosnv.com Build Rules from xml blob
+    try:
+        rule_id = rules.getAttribute('id')
+        rule_severity = rules.getAttribute('severity')
+        rule_weight = rules.getAttribute('weight')
+    except:
+        print(sys.exc_info()[0])
+    for x in rules.childNodes:
+        if x.nodeType == 3:
+            rules.removeChild(x)
+        else:
+            if x.nodeName == 'version':
+                rule_version = x.firstChild.nodeValue
+            elif x.nodeName == 'title':
+                rule_title = x.firstChild.nodeValue
+            elif x.nodeName == 'description':
+                rule_desc = x #TODO jasimmonsv@jasimmonsv.com build description
+            elif x.nodeName == 'reference':
+                rule_ref = x #TODO jasimmonsv@jasimmonsv.com build reference
+            elif x.nodeName == 'fixtext':
+                rule_fixtext = parse_fixtext(x)
+            elif x.nodeName == 'fix':
+                rule_fix = x.getAttribute('id')
+            elif x.nodeName == 'check':
+                rule_check = x #TODO jasimmonsv@jasimmonsv.com build check
+            else:
+                raise Exception('Node not recognized')
+                print(x)
+        return_rules.append(Stig_Rule(rule_id, rule_version, rule_title, 
+                            rule_desc, rule_ref, rule_fixtext, rule_fix, 
+                            rule_severity, rule_weight))
+    return return_rules
 def main():
     """
     
@@ -201,6 +281,9 @@ def main():
     Raises:
     """
     doc = parse(XML_FILE)
+    group_title = ''
+    group_description = ''
+    group_rules = ''
     groups = doc.getElementsByTagName('Group')
     for node in groups:
         id = node.getAttribute('id')
@@ -209,15 +292,20 @@ def main():
                 node.removeChild(x)
             else:
                 if x.nodeName == 'title': 
-                    title = ''
+                    group_title = x.firstChild.nodeValue
                 elif x.nodeName == 'description':
-                    description = ''
+                    group_description = x.firstChild.nodeValue
                 elif x.nodeName == 'Rule':
-                    rules = ''
-    pass
-    print(doc)
-    #TODO jsimmons@jasimmonsv.com read in xml file
-    #TODO jsimmons@jasimmonsv.com parse XML FILE
+                    group_rules = x
+        tmp_group = StigGroup(id, group_title, group_description)
+        
+        #loop through the def build_rules that takes rules xml blob and creates 
+        #an array of rules
+        print(group_rules)
+        for x in parse_rules(group_rules): 
+            stig_groups.add_rule(x)
+        stig_groups.append(tmp_group) #append group only after fully built from xml
+    
     #TODO jsimmons@jasimmonsv.com move parsed files into data structure
     #TODO jsimmons@jasimmonsv.com using data structure, build JIRA Test Cases
  
