@@ -7,7 +7,6 @@ from STIG2Jira import *
 import unittest
 
 
-
 class UnitTestCheckCheck(unittest.TestCase):
     """All the unit test cases for the Check Class
     """
@@ -33,7 +32,6 @@ class UnitTestCheckCheck(unittest.TestCase):
                   'Value Type:  REG_DWORD'
                   'Value:  0')
         
-    
     def test_create_check(self):
         self.test_check = StigCheck(self.name, self.sys, self.href, self.content)
         self.assertIsInstance(self.test_check, StigCheck, 'StigCheck'
@@ -41,6 +39,7 @@ class UnitTestCheckCheck(unittest.TestCase):
                             
     def tearDown(self):
         self.test_check = None
+        
         
 class UnitTestCheckReference(unittest.TestCase):
     """All the unit test cases for the Reference class
@@ -54,7 +53,6 @@ class UnitTestCheckReference(unittest.TestCase):
         self.subject = 'Windows 7'
         self.id = '1712'
         
-        
     def test_create_reference(self):
         self.test_reference = StigReference(self.title, self.publisher, 
                                             self.type, self.subject, self.id)
@@ -64,6 +62,7 @@ class UnitTestCheckReference(unittest.TestCase):
     def tearDown(self):
         self.test_reference = None
 
+        
 class UnitTestCheckFix(unittest.TestCase):
     def setUp(self):
         self.fix_id = 'F-29449r1_fix'
@@ -74,7 +73,8 @@ class UnitTestCheckFix(unittest.TestCase):
     
     def tearDown(self):
         self.test_fix = None
-        
+    
+    
 class UnitTestCheckIdent(unittest.TestCase):
     def setUp(self):
         self.system = 'http://cce.mitre.org'
@@ -83,7 +83,8 @@ class UnitTestCheckIdent(unittest.TestCase):
     def test_create_ident(self):
         test_ident = StigIdent(self.system, self.content)
         self.assertIsInstance(test_ident, StigIdent)
-        
+       
+       
 class UnitTestCheckFixtext(unittest.TestCase):
     def setUp(self):
         self.fixref = ''
@@ -92,6 +93,7 @@ class UnitTestCheckFixtext(unittest.TestCase):
     def test_create_fixtext(self):
         test_fixtext = StigFixtext(self.fixref, self.content)
         self.assertIsInstance(test_fixtext, StigFixtext)
+        
         
 class UnitTestCheckRule(unittest.TestCase):
     """All the unit test cases for the Rule class
@@ -218,8 +220,9 @@ class UnitTestCheckRule(unittest.TestCase):
         self.assertTrue(test_rule.weight == weight)
         self.assertTrue(test_rule.change_weight(ch_weight))
         self.assertTrue(test_rule.weight == ch_weight)
-        self.assertTrue(test_rule.reset_weight)
+        self.assertTrue(test_rule.reset_weight())
         self.assertTrue(test_rule.weight == weight)
+        
         
 class UnitTestCheckGroup(unittest.TestCase):
     """All unit test cases for the Group class
@@ -314,17 +317,21 @@ class UnitTestCheckGroup(unittest.TestCase):
         self.assertTrue(test_group.add_rule(self.test_rule))
         self.assertTrue(test_group.rules[0].ID == test_group.rules[1].ID)
         
-class TestParseReference(unittest.TestCase):
+        
+class TestParseReference(unittest.TestCase): #TODO Build ParseReference TC
     def setUp(self):
         pass
         
-class TestParseFixtext(unittest.TestCase):
+        
+class TestParseFixtext(unittest.TestCase):  #TODO Build ParseFixtext TC
     def setUp(self):
         pass
 
-class TestParseRules(unittest.TestCase):
+        
+class TestParseRules(unittest.TestCase):  #TODO Build ParseRules TC
     def setUp(self):
         pass
+        
         
 class TestReadXML(unittest.TestCase):
     
@@ -334,7 +341,6 @@ class TestReadXML(unittest.TestCase):
         doc = parse(XML_FILE)
         self.groups = doc.getElementsByTagName('Group')
         
-    
     def test_load_XML(self):
         group_title = ''
         group_description = ''
@@ -374,6 +380,8 @@ class TestReadXML(unittest.TestCase):
             #an array of rules
             tmp_group.add_rule(parse_rules(group_rules))
             stig_groups.append(tmp_group) #append group only after fully built from xml        
+
+            
 if __name__ == '__main__':
     suiteCheck = unittest.TestLoader().loadTestsFromTestCase(UnitTestCheckCheck)
     suiteReference = unittest.TestLoader().loadTestsFromTestCase(UnitTestCheckReference)
