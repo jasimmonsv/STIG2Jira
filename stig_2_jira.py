@@ -20,10 +20,11 @@ from xml.dom.minidom import parse
 #import unittest
 import time
 import logging
+import json
+import requests
 
 DEF_SEVERITY = 'high'
 DEF_WEIGHT = '10'
-#TODO jsimmons@jasimmonsv.com set XML_FILE from command line
 XML_FILE = 'U_Windows_7_V1R13_STIG_Manual-xccdf.xml' 
 stig_groups = []
 
@@ -451,7 +452,69 @@ def parse_rules(rules):
     else:
         raise Exception('StigRule was not properly created')
 
-def jsonToJira(groups):
+def f(x):
+    return {
+            'high': 1,
+            'medium': 2,
+            'low': 3
+            }[x]
+def g(x):
+    if x < 14 : return 1
+    elif x < 18 : return 2
+    elif x < 22 : return 3
+    elif x < 26 : return 4
+    else: return 5
+                
+def _json_to_jira(group, project, user, url):
+    """ Convirt from STIGGroup to JSON and then ship to Jira
+    Args:
+        groups: (StigGroup) Master list of all Requirements
+        project: string with jira recognized project ID
+        user: string with users jira username
+        url: string with url to Jira API required
+        
+    Returns:
+        True is succeeded, False in not
+    
+    Raises:
+        AssertionErrors if passed vars are not of correct type.
+    """
+    assert type(group) is StigGroup, "Passed Group is not type StigGroup: %r" % group
+    assert type(project) is str, "Passed Project is not a String: %r" % project
+    assert type(user) is str, "Passed user is not a String: %r" % user
+    assert type(url) is str, "Passed URL is not a String: %r" % url
+        
+    #TODO (jasimmonsv) Grab group and dump into variables
+    if len(group.rules)>1: raise ValueError("More Rules in this Group then expected")
+    _rule = group.rules[0]
+    _calc = g(f(_rule.severity) * float(_rule.weight))
+    
+    _summary = group.ID+" "+group.TITLE
+    _priority = str(_calc)
+    _labels = [group.ID, _rule.ID]
+    _id = "7"
+    _assignee = "-1"
+    _env = ""
+    _desc = ""
+    
+    _project = {"id":project}
+    _issuetype = {"id":_id}
+    _reporter = {"name":user}
+    _json_assignee = {"name": _assignee}
+    _json_priority = {"id":_priority}
+    
+    _desc = _rule.TITLE+"\n\n"+_rule.DESCRIPTION
+    
+    #Populate all variables into json structure
+    fields = {"project":_project, "summary":_summary, "issuetype":_issuetype,
+            "reporter": _reporter, "assignee":_json_assignee, "priority":_json_priority,
+            "labels":_labels, "environment":_env, "description":_desc 
+            }
+    _dict = [{"fields":fields}]
+    _data=json.dumps(_dict)
+    _headers = {"content-type": "application/json"}
+    _resp=requests.post(url=url, data=_data[1:-1], headers=_headers, auth=("jirasys","kCW0LP4VCE9o"))
+    _data = _resp.content
     return True
 
 def printToHTML(groups):
@@ -481,7 +544,7 @@ def printToHTML(groups):
                 f.write("Version: "+rule.VERSION+"<br>")
                 f.write("Title: "+rule.TITLE+"<br>")
                 f.write("Description:<br>")
-                f.write("\t"+rule.DESCRIPTION+"<br>")#TODO parse Description
+                f.write("\t"+rule.DESCRIPTION+"<br>")
                 f.write("Reference:<br>")
                 f.write("\tRef Title:\t"+rule.REFERENCE.title+"<br>")
                 f.write("\tRef Publisher:\t"+rule.REFERENCE.publisher+"<br>")
@@ -537,10 +600,16 @@ def main():
         _tmp_rules=[]
         tmp_group=None
         i=None
-        
-    #TODO jsimmons@jasimmonsv.com using data structure, build JIRA Test Cases
-    #printing results to screen TODO remove this block    
-    printToHTML(stig_groups)
+    i=0        
+    for group in stig_groups:
+        if i > 10:
+            break
+        _json_to_jira(group,
+                  "10108", 
+                  "634273",
+                  "http://jira.cmc.hl.com/rest/api/2/issue")
+        i+=1
+    print("Done!")
         
         
 if __name__ == '__main__':
