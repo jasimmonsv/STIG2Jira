@@ -513,7 +513,7 @@ def _json_to_jira(group, project, user, url):
     _dict = [{"fields":fields}]
     _data=json.dumps(_dict)
     _headers = {"content-type": "application/json"}
-    _resp=requests.post(url=url, data=_data[1:-1], headers=_headers, auth=("jirasys","kCW0LP4VCE9o"))
+    _resp=requests.post(url=url, data=_data[1:-1], headers=_headers, auth=("jirasys","xxxxxxxx"))
     _data = _resp.content
     return True
 
@@ -600,15 +600,11 @@ def main():
         _tmp_rules=[]
         tmp_group=None
         i=None
-    i=0        
     for group in stig_groups:
-        if i > 10:
-            break
         _json_to_jira(group,
-                  "10108", 
-                  "634273",
+                  "10108",      #Change this to specific Project Number
+                  "634273",     #Change to users Jira loging
                   "http://jira.cmc.hl.com/rest/api/2/issue")
-        i+=1
     print("Done!")
         
         
