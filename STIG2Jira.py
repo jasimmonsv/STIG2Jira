@@ -15,16 +15,18 @@ in a Jira system.
 Args:
 XML_FILE: file of the xml document
 """
-import xml.dom.minidom
-from xml.dom.minidom import parse, parseString
-import unittest
-import sys
+#import xml.dom.minidom
+from xml.dom.minidom import parse
+#import unittest
+import time
+import logging
 
 DEF_SEVERITY = 'high'
 DEF_WEIGHT = '10'
 #TODO jsimmons@jasimmonsv.com set XML_FILE from command line
 XML_FILE = 'U_Windows_7_V1R13_STIG_Manual-xccdf.xml' 
 stig_groups = []
+
 
 class StigIdent(object):
     """A StigIdent data object
@@ -39,7 +41,8 @@ class StigIdent(object):
     def __init__(self, sys = None, content = None):
         self.system = sys
         self.content = content
-        
+      
+      
 class StigFixtext(object):
     """A Fixtext data structure
     
@@ -47,12 +50,13 @@ class StigFixtext(object):
         fixref: a cross reference to DISA tracking
         content: the actual content of the fixtext
     """
-    fixref = ''
-    content = ''
+    fixref = None
+    content = None
     
     def __init__(self, fixref, content):
         self.fixref = fixref
         self.content = content
+        
         
 class StigFix(object):
     """A Fix data structure
@@ -60,11 +64,12 @@ class StigFix(object):
     Attributes:
         fix_id: a cross reference DISA id
     """
-    fix_id = ''
+    fix_id = None
     
     def __init__(self, fix_id):
         self.fix_id = fix_id
 
+        
 class StigReference(object):
     """A Reference data structure
     
@@ -75,11 +80,11 @@ class StigReference(object):
         subject: What subject (e.g., OS, hardware device, etc)
         identifier: DISA provided identifier
     """
-    title = ''
-    publisher = ''
-    type = ''
-    subject = ''
-    identifier = ''
+    title = None
+    publisher = None
+    type = None
+    subject = None
+    identifier = None
     
     def __init__(self, title, pub, type, subject, id):
         self.title = title
@@ -88,15 +93,16 @@ class StigReference(object):
         self.subject = subject
         self.identifier = id
         
+        
 class StigCheck(object):
     """
     This a private class is an internal class built to store the specific check data for
     a given STIG rule.
     """
-    SYSTEM=''
-    NAME=''
-    HREF=''
-    CONTENT = ''
+    SYSTEM = None
+    NAME = None
+    HREF = None
+    CONTENT = None
     def __init__(self, name, sys = '', href = '', content = ''):
         """
         This class is built to easily store and manipulate the various checks within
@@ -114,6 +120,7 @@ class StigCheck(object):
         self.NAME = name
         self.HREF = href
         self.CONTENT = content
+        
         
 class StigRule(object):
     """This class is built to easily store and manipulate the various rules 
@@ -177,6 +184,7 @@ class StigRule(object):
         self.weight = weight
         self._DISA_WEIGHT = weight
         self.IDENT=  None
+        self.checks=[]
         #Check that all data types are proper
         if isinstance(ref, StigReference):
             self.REFERENCE = ref        
@@ -231,6 +239,7 @@ class StigRule(object):
         self.weight = self._DISA_WEIGHT
         return True
         
+        
 class StigGroup(object):
     """Class for Group data structure
     
@@ -243,10 +252,10 @@ class StigGroup(object):
         DESCRIPTION: longer description of group
         RULES: array of rules to check specific group
     """
-    ID = ''
-    TITLE=''
-    DESCRIPTION=''
-    rules=[]
+    ID = None
+    TITLE = None
+    DESCRIPTION = None
+    rules = []
     
     def __init__(self, id, title, desc):
         """Inits StigGroup with id, title, desc and a null array of Rules
@@ -268,6 +277,7 @@ class StigGroup(object):
         self.DESCRIPTION = desc
         self.rules = []
     
+    
     def add_rule(self, rule):
         """Add a pre-build rule to the STIG Group
     
@@ -283,6 +293,7 @@ class StigGroup(object):
         self.rules.append(rule)
         return True
 
+        
 def parse_reference(ref):
     """Parse the XML element and build StigRefernce
     Args:
@@ -299,6 +310,8 @@ def parse_reference(ref):
     _type = None
     _subject = None
     _id = None
+    _ret_ref = None
+    
     for x in ref.childNodes:
         if x.nodeType == 3:
             pass
@@ -314,37 +327,40 @@ def parse_reference(ref):
             elif x.nodeName == 'dc:identifier':
                 _id = x.firstChild.nodeValue
     
-    ret_ref = StigReference(_title, _pub, _type, _subject, _id)
+    _ret_ref = StigReference(_title, _pub, _type, _subject, _id)
     #Error check
-    if isinstance(ret_ref, StigReference):
-            return ret_ref
+    if isinstance(_ret_ref, StigReference):
+            return _ret_ref
     else:
         raise Exception('StigReference was not created properly')
+    
     
 def parse_fixtext(fixtext):
     """Parse the XML element and build StigRefernce
         
-        Args:
-            fixtext: this is an unparsed XML element following DISA Reference 
-                     schema
+    Args:
+        fixtext: this is an unparsed XML element following DISA Reference 
+                 schema
       
-        Returns:
-            Returns a proper StigFixtext object
-      
-        Raises:
-            Exception if StigFixtext is not a proper instance
+    Returns:
+        Returns a proper StigFixtext object
+     
+    Raises:
+        Exception if StigFixtext is not a proper instance
     """
-    fixref = fixtext.getAttribute('fixref')
-    content = fixtext.firstChild.nodeValue
-    ret_fixtext = StigFixtext(fixref, content)
+    
+    _fixref = fixtext.getAttribute('fixref')
+    _content = fixtext.firstChild.nodeValue
+    _ret_fixtext = StigFixtext(_fixref, _content)
     #Error check
-    if isinstance(ret_fixtext, StigFixtext):
-        return ret_fixtext
+    if isinstance(_ret_fixtext, StigFixtext):
+        return _ret_fixtext
     else:
         raise Exception('StigFixtext was not created properly')
 
+        
 def parse_check(checks):
-    """Pase the XML element and build StigCheck Object
+    """Pass the XML element and build StigCheck Object
     
     Args:
         checks: an XML Element containing all the Checks for a given Rule
@@ -353,30 +369,32 @@ def parse_check(checks):
         an array of StigRule()
     
     Raises:
-        
+        Exception if StigCheck is not a proper instance
     """
     _name = None
     _sys = None
     _href = None
     _content = None
     _sys = checks.getAttribute('system')
+    _tmp_check = None
     for x in checks.childNodes:
         if x.nodeType == 3:
             pass
         else:
             if x.nodeName == 'check-content-ref':
                 _href = x.getAttribute('href')
+                _name = x.getAttribute('name')
             if x.nodeName == 'check-content':
                 _content = x.firstChild.nodeValue       
-    tmp_check = StigCheck(_name, _sys, _href, _content)
-    if isinstance(tmp_check, StigCheck):
-        return tmp_check
+    _tmp_check = StigCheck(_name, _sys, _href, _content)
+    if isinstance(_tmp_check, StigCheck):
+        return _tmp_check
     else:
         raise Exception('StigCheck was not created properly')
-        
+      
+      
 def parse_rules(rules):
     """
-    
     Args:
         rules: an XML Element containing all the rules for a given Group
         
@@ -394,10 +412,11 @@ def parse_rules(rules):
     _rule_ident = None
     _rule_fixtext = None
     _rule_fix = None
-    _rule_check = None
+    _rule_check = []
     _rule_id = rules.getAttribute('id')
     _rule_severity = rules.getAttribute('severity')
     _rule_weight = rules.getAttribute('weight')
+    _tmp_rule = None
     for x in rules.childNodes:
         if x.nodeType == 3:
             pass
@@ -418,36 +437,85 @@ def parse_rules(rules):
             elif x.nodeName == 'fix':
                 _rule_fix = StigFix(x.getAttribute('id'))
             elif x.nodeName == 'check':
-                _rule_check = x #TODO jasimmonsv@jasimmonsv.com build check
+                _rule_check.append(parse_check(x))
             else:
                 raise Exception('Node not recognized')
     _tmp_rule = StigRule(_rule_id, _rule_version, _rule_title, 
                         _rule_desc, _rule_ref, _rule_ident, _rule_fixtext, _rule_fix, 
                         _rule_severity, _rule_weight)
-    if _rule_check != None:
-        tmp_check = parse_check(_rule_check)
-        _tmp_rule.add_check(tmp_check)
+    if len(_rule_check) > 0:
+        for i in _rule_check:
+            _tmp_rule.add_check(i)
     if isinstance(_tmp_rule, StigRule):
         return _tmp_rule
     else:
         raise Exception('StigRule was not properly created')
+
+def jsonToJira(groups):
+    return True
+
+def printToHTML(groups):
+    """
+    Args:
+        groups: Master list of all Requirements
+        
+    Returns:
+        True is succeeded, False in not
+    
+    Raises:
+        N/A
+    """
+    with open('./results.'+str(start)+'.html','w') as f:
+        f.write('<html><body>')
+        for group in groups:
+            f.write(group.ID+"<br>")
+            f.write(group.TITLE+"<br>")
+            f.write(group.DESCRIPTION+"<br>")
+            for rule in group.rules:
+                f.write("****Rule****<br>")
+                f.write("ID: "+rule.ID+"<br>")
+                f.write("DISA Severity: "+rule._DISA_SEVERITY+"<br>")
+                f.write("Rule Severity: "+rule.severity+"<br>")
+                f.write("DISA Weight: "+rule._DISA_WEIGHT+"<br>")
+                f.write("Rule Weight: "+rule.weight+"<br>")
+                f.write("Version: "+rule.VERSION+"<br>")
+                f.write("Title: "+rule.TITLE+"<br>")
+                f.write("Description:<br>")
+                f.write("\t"+rule.DESCRIPTION+"<br>")#TODO parse Description
+                f.write("Reference:<br>")
+                f.write("\tRef Title:\t"+rule.REFERENCE.title+"<br>")
+                f.write("\tRef Publisher:\t"+rule.REFERENCE.publisher+"<br>")
+                f.write("\tRef Type:\t"+rule.REFERENCE.type+"<br>")
+                f.write("\tRef Subject:\t"+rule.REFERENCE.subject+"<br>")
+                f.write("\tRef Identifier:\t"+rule.REFERENCE.identifier+"<br>")
+                f.write("Ident: "+str(rule.IDENT)+"<br>")
+                f.write("Fixtext:<br>")
+                f.write("\tFixref: "+rule.FIXTEXT.fixref+"<br>")
+                f.write("\tContent: "+rule.FIXTEXT.content+"<br>")
+                f.write("Fix:<br>")
+                f.write("\tID:\t"+rule.FIX.fix_id+"<br>")
+                f.write("# Rule Checks:\t"+str(len(rule.checks))+"<br>")
+                f.write('*****************************<br>')
+        f.write('</body></html>')
+    f.closed
+    return True    
     
 def main():
     """
-    
     Args:
-    
+        N/A
     Returns:
-    
+        True or False
     Raises:
     """
     doc = parse(XML_FILE)
-    group_title = ''
-    group_description = ''
-    group_rules = ''
+    group_title = None
+    group_description = None
+    _tmp_rules=[]
+    stig_groups=[]
     groups = doc.getElementsByTagName('Group')
     for node in groups:
-        id = node.getAttribute('id')
+        _id = node.getAttribute('id')
         for x in node.childNodes:
             if x.nodeType == 3: #if node is a Text node
                 pass
@@ -457,15 +525,25 @@ def main():
                 elif x.nodeName == 'description':
                     group_description = x.firstChild.nodeValue
                 elif x.nodeName == 'Rule':
-                    group_rules = x
-        tmp_group = StigGroup(id, group_title, group_description)
-        
-        #loop through the def build_rules that takes rules xml blob and creates 
-        #an array of rules
-        tmp_group.add_rule(parse_rules(group_rules))
+                    _tmp_rules.append(parse_rules(x))
+        tmp_group = StigGroup(_id, group_title, group_description)
+        for i in _tmp_rules:
+            tmp_group.add_rule(i)
         stig_groups.append(tmp_group) #append group only after fully built from xml
-    
+        _id = None
+        group_title = None
+        group_description = None
+        group_rules = None
+        _tmp_rules=[]
+        tmp_group=None
+        i=None
+        
     #TODO jsimmons@jasimmonsv.com using data structure, build JIRA Test Cases
- 
+    #printing results to screen TODO remove this block    
+    printToHTML(stig_groups)
+        
+        
 if __name__ == '__main__':
+    start = time.time()
+    logging.info('Time Started: %s',start)
     main()
